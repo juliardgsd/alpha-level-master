@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import google.generativeai as genai
+import gunicorn
+
 
 # ------------------------------
 # Configurações Iniciais
