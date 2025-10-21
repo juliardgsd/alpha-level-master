@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Alpha Insights - Análise de Vendas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Alpha Insights</h1>
+        <p>Envie sua planilha de vendas e receba uma análise inteligente com gráficos automáticos.</p>
+
+        <form action="/process" method="POST" enctype="multipart/form-data">
+            <label>Escolha o arquivo CSV:</label>
+            <input type="file" name="file" accept=".csv" required>
+
+            <label>Pergunte ao assistente:</label>
+            <input type="text" name="question" placeholder="Ex: Quais produtos venderam mais este mês?" required>
+
+            <button type="submit">Analisar</button>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if answer %}
+            <div class="answer">
+                <h2>🧠 Análise do Assistente:</h2>
+                <p>{{ answer }}</p>
+            </div>
+        {% endif %}
+
+        {% if graphs %}
+            <div class="graphs">
+                <h2>📈 Gráficos Gerados:</h2>
+                {% for g in graphs %}
+                    <img src="{{ url_for('static', filename=g.split('static/')[1]) }}" alt="Gráfico de vendas">
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

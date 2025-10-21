@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Insights | Resultados</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: radial-gradient(circle at 10% 20%, #0f172a 0%, #000000 100%);
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-5xl mx-auto fade-in">
+        <h1 class="text-3xl font-bold text-blue-400 mb-6 text-center">📊 Resultados da Análise</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Gráfico -->
+            <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 backdrop-blur-lg shadow-lg">
+                <h2 class="text-xl font-semibold text-blue-300 mb-4">Desempenho Visual</h2>
+                <img src="{{ url_for('static', filename='uploads/grafico.png') }}" alt="Gráfico de vendas" class="rounded-lg w-full">
+            </div>
+
+            <!-- Insights -->
+            <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 backdrop-blur-lg shadow-lg">
+                <h2 class="text-xl font-semibold text-blue-300 mb-4">📈 Insights da IA</h2>
+                <p class="text-gray-300 leading-relaxed whitespace-pre-line">{{ insights }}</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="/" class="text-blue-400 hover:text-blue-300 transition-all underline">← Fazer nova análise</a>
+        </div>
+    </div>
+</body>
+</html>

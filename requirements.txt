@@ -1,0 +1,7 @@
+Flask>=2.0
+pandas>=1.5
+openpyxl>=3.0
+matplotlib>=3.0
+python-dotenv>=0.21
+google-generativeai>=0.4 # opcional — exemplo de uso da Gemini (comente se não for usar)
+werkzeug

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Alpha Insights — Resultado</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Resultado da Análise</h1>
+
+    {% if summary %}
+      <section class="summary">
+        <h2>Resumo do Gemini</h2>
+        <p>{{ summary }}</p>
+      </section>
+    {% endif %}
+
+    {% if graph %}
+      <section class="graph">
+        <h2>Gráfico Gerado</h2>
+        <img src="{{ url_for('static', filename='uploads/grafico.png') }}" alt="Gráfico de Análise">
+      </section>
+    {% endif %}
+
+    <a href="/" class="back-button">⬅️ Nova Análise</a>
+  </main>
+</body>
+</html>
