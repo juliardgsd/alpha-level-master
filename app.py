@@ -1,64 +1,128 @@
-from flask import Flask, render_template, request, jsonify
-from google import genai
-import pandas as pd
 import os
+from flask import Flask, render_template, request, jsonify
+import pandas as pd
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
+import google.generativeai as genai
 
-# Load .env
+# ------------------------------
+# Configurações Iniciais
+# ------------------------------
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 app = Flask(__name__)
 
-# Gemini client
-client = genai.Client(api_key=GEMINI_API_KEY)
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# ------------------------------
+# Configuração do Gemini
+# ------------------------------
+api_key = os.getenv('GEMINI_API_KEY')
+if api_key and api_key.startswith("AIza"):
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("models/gemini-2.5-flash")
+    print("✅ Gemini configurado com sucesso.")
+else:
+    model = None
+    print("⚠️ Chave Gemini não encontrada")
 
-@app.route("/")
+# ------------------------------
+# Geração de gráficos
+# ------------------------------
+def gerar_graficos(df):
+    graficos = []
+
+    # Vendas por Produto
+    if 'Produto' in df.columns and 'Vendas' in df.columns:
+        plt.figure(figsize=(6, 4))
+        df.groupby('Produto')['Vendas'].sum().plot(kind='bar', color='teal')
+        plt.title('Vendas por Produto')
+        plt.ylabel('Total de Vendas')
+        path = os.path.join(app.config['UPLOAD_FOLDER'], 'grafico_produto.png')
+        plt.tight_layout()
+        plt.savefig(path)
+        graficos.append(path)
+
+    # Vendas por Mês
+    if 'Data' in df.columns and 'Vendas' in df.columns:
+        df['Data'] = pd.to_datetime(df['Data'], errors='coerce')
+        df['Mês'] = df['Data'].dt.strftime('%Y-%m')
+        plt.figure(figsize=(6, 4))
+        df.groupby('Mês')['Vendas'].sum().plot(kind='line', marker='o', color='orange')
+        plt.title('Vendas por Mês')
+        plt.ylabel('Total de Vendas')
+        path = os.path.join(app.config['UPLOAD_FOLDER'], 'grafico_mes.png')
+        plt.tight_layout()
+        plt.savefig(path)
+        graficos.append(path)
+
+    return graficos
+
+# ------------------------------
+# Página inicial
+# ------------------------------
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-
-@app.route("/analyze", methods=["POST"])
+# ------------------------------
+# Rota do Chat + CSV
+# ------------------------------
+@app.route('/analyze', methods=['POST'])
 def analyze():
     try:
-        message = request.form.get("message")
-        file = request.files.get("file")
+        message = request.form.get("message", "")
 
-        if not message:
-            return jsonify({"error": "Mensagem vazia"}), 400
+        df = None
+        if "file" in request.files:
+            file = request.files["file"]
 
-        csv_content = ""
-        if file:
-            df = pd.read_csv(file)
-            csv_content = df.to_csv(index=False)
+            if file.filename.endswith(".csv"):
+                df = pd.read_csv(file)
+            elif file.filename.endswith((".xlsx", ".xls")):
+                df = pd.read_excel(file)
+            elif file.filename != "":
+                return jsonify({"error": "Formato não suportado (use CSV ou Excel)"})
+
+        # Se não houver modelo
+        if not model:
+            return jsonify({"response": "Erro: Gemini não configurado no servidor."})
+
+        # Criar contexto de dados
+        dados_str = df.head(20).to_string() if df is not None else "Nenhum arquivo enviado."
 
         prompt = f"""
-Você é um analista profissional altamente qualificado.
+Você é um assistente sênior da Alpha Insights especializado em análise de vendas e BI.
 
-REGRAS:
-- Sua resposta deve ser objetiva, porém robusta.
-- Use subtítulos, bullet points e estrutura profissional.
-- Destaque insights, riscos, ações recomendadas e análises relevantes.
-- Seja preciso, claro e extremamente organizado.
+Sua tarefa:
 
-Mensagem do usuário:
-{message}
+1. Interpretar os dados enviados (CSV/Excel)
+2. Analisar a pergunta do usuário
+3. Responder com:
+   • Estrutura profissional  
+   • Clareza  
+   • Dados relevantes  
+   • Tom consultivo  
+   • Orientação prática
 
-Dados enviados (CSV):
-{csv_content if file else "Nenhum arquivo enviado"}
+Dados (primeiras 20 linhas):
+{dados_str}
+
+Pergunta: {message}
+
+Escreva uma resposta robusta, objetiva e profissional, como em um relatório executivo curto.
 """
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
+        resposta = response.text
 
-        return jsonify({"response": response.text})
+        return jsonify({"response": resposta})
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)})
 
-
-if __name__ == "__main__":
+# ------------------------------
+# Execução local
+# ------------------------------
+if __name__ == '__main__':
     app.run(debug=True)
