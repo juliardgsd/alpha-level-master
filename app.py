@@ -1,64 +1,55 @@
-from flask import Flask, render_template, request, jsonify
-from google import genai
+from flask import Flask, render_template, request
 import pandas as pd
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
-# Load .env
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 app = Flask(__name__)
 
-# Gemini client
-client = genai.Client(api_key=GEMINI_API_KEY)
-
+# Configuração da API Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
-@app.route("/analyze", methods=["POST"])
-def analyze():
+@app.route("/analisar", methods=["POST"])
+def analisar():
     try:
-        message = request.form.get("message")
-        file = request.files.get("file")
+        usuario_prompt = request.form.get("prompt")
+        arquivo = request.files.get("arquivo")
 
-        if not message:
-            return jsonify({"error": "Mensagem vazia"}), 400
+        if not usuario_prompt:
+            return "Erro: O campo de prompt está vazio."
 
-        csv_content = ""
-        if file:
-            df = pd.read_csv(file)
-            csv_content = df.to_csv(index=False)
+        df = None
+        if arquivo:
+            try:
+                df = pd.read_csv(arquivo)
+            except Exception:
+                return "Erro ao ler o arquivo CSV. Verifique o formato."
 
-        prompt = f"""
-Você é um analista profissional altamente qualificado.
+        # Construção do prompt final
+        prompt_final = f"""
+Você é um modelo de IA que deve responder de forma objetiva, clara e profissional.
 
-REGRAS:
-- Sua resposta deve ser objetiva, porém robusta.
-- Use subtítulos, bullet points e estrutura profissional.
-- Destaque insights, riscos, ações recomendadas e análises relevantes.
-- Seja preciso, claro e extremamente organizado.
-
-Mensagem do usuário:
-{message}
+Prompt do usuário:
+{usuario_prompt}
 
 Dados enviados (CSV):
-{csv_content if file else "Nenhum arquivo enviado"}
+{df.to_string() if df is not None else "Nenhum arquivo CSV enviado."}
+
+Gere uma resposta organizada, profissional e direta.
 """
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=prompt
-        )
-
-        return jsonify({"response": response.text})
+        resposta = model.generate_content(prompt_final)
+        return resposta.text
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        return f"Ocorreu um erro: {str(e)}"
 
 if __name__ == "__main__":
     app.run(debug=True)
