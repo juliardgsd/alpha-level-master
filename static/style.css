@@ -1,65 +1,136 @@
-body {
-    font-family: 'Inter', sans-serif;
-    background: #f5f7fa;
-    color: #222;
+/* RESET */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
 }
 
-.container {
-    width: 80%;
-    max-width: 900px;
-    margin: 50px auto;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+body {
+    background: #f4f5f7;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 280px;
+    background: #1f1f2e;
+    color: white;
     padding: 30px;
 }
 
-h1 {
-    text-align: center;
-    color: #0077b6;
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8a7bff;
+    margin-bottom: 15px;
 }
 
-form {
+.side-info {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 40px;
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
+    justify-content: center;
 }
 
-input[type="file"], input[type="text"] {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+.chat-container {
+    width: 100%;
+    max-width: 720px;
 }
 
-button {
-    background: #0077b6;
+.title {
+    font-size: 28px;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* FORM */
+.label {
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.input-file,
+.input-text {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #d0d0e0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.input-text:focus {
+    border-color: #7a70ff;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(to right, #6b6bff, #9d6bff);
     color: white;
-    padding: 10px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-button:hover {
-    background: #005f87;
+.btn:hover {
+    opacity: 0.9;
 }
 
-.answer, .graphs {
-    margin-top: 30px;
+/* CARDS */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .error {
-    color: #b71c1c;
-    background: #ffcdd2;
-    padding: 10px;
-    border-radius: 8px;
+    background: #ffe5e5;
+    color: #990000;
 }
 
-.graphs img {
+/* TEXT */
+.subtitle {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #3a3a6f;
+}
+
+.ai-text {
+    line-height: 1.6;
+}
+
+/* GRAPHS */
+.graph-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.graph-img {
     width: 100%;
-    border-radius: 12px;
-    margin-top: 15px;
+    border-radius: 10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .sidebar {
+        display: none;
+    }
+    .main {
+        padding: 20px;
+    }
 }
