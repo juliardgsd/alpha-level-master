@@ -1,29 +1,28 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Level Assistant</title>
-
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Alpha Level Master</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
+    <div class="container">
+        <h1>Alpha Level Master</h1>
 
-<div class="container">
+        <form action="/analisar" method="POST" enctype="multipart/form-data">
+            <label for="prompt">Digite seu prompt:</label>
+            <textarea name="prompt" id="prompt" required></textarea>
 
-    <div class="chat-window" id="chatWindow"></div>
+            <label for="arquivo">Envie seu arquivo CSV (opcional):</label>
+            <input type="file" name="arquivo" accept=".csv">
 
-    <div class="input-area">
-        <input type="file" id="csvFile" accept=".csv">
+            <button type="submit">Analisar</button>
+        </form>
 
-        <textarea id="userInput" placeholder="Digite sua pergunta..." rows="1"></textarea>
-
-        <button id="sendBtn">Enviar</button>
+        <div class="resultado">
+            {{ resultado | safe }}
+        </div>
     </div>
-
-</div>
-
-<script src="/static/script.js"></script>
 </body>
 </html>
