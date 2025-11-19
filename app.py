@@ -5,124 +5,129 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-# ------------------------------
-# Configurações Iniciais
-# ------------------------------
+# ----------------------------------
+# CONFIGURAÇÃO INICIAL
+# ----------------------------------
 load_dotenv()
+
 app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "static/uploads"
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# ----------------------------------
+# CONFIGURANDO GEMINI
+# ----------------------------------
+api_key = os.getenv("GEMINI_API_KEY")
 
-# ------------------------------
-# Configuração do Gemini
-# ------------------------------
-api_key = os.getenv('GEMINI_API_KEY')
 if api_key and api_key.startswith("AIza"):
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("models/gemini-2.5-flash")
     print("✅ Gemini configurado com sucesso.")
 else:
+    print("⚠️ ERRO: Nenhuma chave válida encontrada no .env")
     model = None
-    print("⚠️ Chave Gemini não encontrada")
 
-# ------------------------------
-# Geração de gráficos
-# ------------------------------
+# ----------------------------------
+# FUNÇÃO PARA GERAR GRÁFICOS
+# ----------------------------------
 def gerar_graficos(df):
     graficos = []
 
-    # Vendas por Produto
-    if 'Produto' in df.columns and 'Vendas' in df.columns:
+    # Gráfico 1 — Vendas por Produto
+    if "Produto" in df.columns and "Vendas" in df.columns:
         plt.figure(figsize=(6, 4))
-        df.groupby('Produto')['Vendas'].sum().plot(kind='bar', color='teal')
-        plt.title('Vendas por Produto')
-        plt.ylabel('Total de Vendas')
-        path = os.path.join(app.config['UPLOAD_FOLDER'], 'grafico_produto.png')
+        df.groupby("Produto")["Vendas"].sum().plot(kind="bar")
+        plt.title("Vendas por Produto")
         plt.tight_layout()
+        path = os.path.join(app.config["UPLOAD_FOLDER"], "grafico_produto.png")
         plt.savefig(path)
         graficos.append(path)
 
-    # Vendas por Mês
-    if 'Data' in df.columns and 'Vendas' in df.columns:
-        df['Data'] = pd.to_datetime(df['Data'], errors='coerce')
-        df['Mês'] = df['Data'].dt.strftime('%Y-%m')
+    # Gráfico 2 — Vendas por Mês
+    if "Data" in df.columns and "Vendas" in df.columns:
+        df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+        df["Mês"] = df["Data"].dt.strftime("%Y-%m")
         plt.figure(figsize=(6, 4))
-        df.groupby('Mês')['Vendas'].sum().plot(kind='line', marker='o', color='orange')
-        plt.title('Vendas por Mês')
-        plt.ylabel('Total de Vendas')
-        path = os.path.join(app.config['UPLOAD_FOLDER'], 'grafico_mes.png')
+        df.groupby("Mês")["Vendas"].sum().plot(kind="line", marker="o")
+        plt.title("Vendas Mensais")
         plt.tight_layout()
+        path = os.path.join(app.config["UPLOAD_FOLDER"], "grafico_mes.png")
         plt.savefig(path)
         graficos.append(path)
 
     return graficos
 
-# ------------------------------
-# Página inicial
-# ------------------------------
-@app.route('/')
+# ----------------------------------
+# ROTA PRINCIPAL
+# ----------------------------------
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-# ------------------------------
-# Rota do Chat + CSV
-# ------------------------------
-@app.route('/analyze', methods=['POST'])
+# ----------------------------------
+# ROTA DE ANÁLISE (CHAT + CSV)
+# ----------------------------------
+@app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        message = request.form.get("message", "")
+        message = request.form.get("message", "").strip()
+        uploaded_file = request.files.get("file")
 
         df = None
-        if "file" in request.files:
-            file = request.files["file"]
 
-            if file.filename.endswith(".csv"):
-                df = pd.read_csv(file)
-            elif file.filename.endswith((".xlsx", ".xls")):
-                df = pd.read_excel(file)
-            elif file.filename != "":
-                return jsonify({"error": "Formato não suportado (use CSV ou Excel)"})
+        # Se tiver arquivo, carregar CSV/Excel
+        if uploaded_file and uploaded_file.filename != "":
+            if uploaded_file.filename.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            elif uploaded_file.filename.endswith((".xlsx", ".xls")):
+                df = pd.read_excel(uploaded_file)
+            else:
+                return jsonify({"error": "Formato inválido. Envie CSV ou Excel."})
 
-        # Se não houver modelo
+        # Processar dados para o prompt
+        dados_texto = df.head(20).to_string() if df is not None else "Nenhuma base enviada."
+
+        # Construir prompt profissional
+        prompt = f"""
+Você é um analista sênior da Alpha Insights especializado em BI e Vendas.
+
+Sua tarefa:
+- Entender os dados enviados
+- Responder à pergunta do usuário de forma:
+  • Profissional
+  • Estruturada
+  • Clara
+  • Baseada em dados
+
+Primeiras linhas dos dados:
+{dados_texto}
+
+Pergunta do usuário:
+{message}
+
+Escreva a resposta no formato de um mini-relatório executivo.
+"""
+
+        # Se Gemini não configurado
         if not model:
             return jsonify({"response": "Erro: Gemini não configurado no servidor."})
 
-        # Criar contexto de dados
-        dados_str = df.head(20).to_string() if df is not None else "Nenhum arquivo enviado."
+        # Chamada ao modelo
+        resposta = model.generate_content(prompt).text
 
-        prompt = f"""
-Você é um assistente sênior da Alpha Insights especializado em análise de vendas e BI.
+        # Gerar gráficos se houver planilha
+        graficos = gerar_graficos(df) if df is not None else []
 
-Sua tarefa:
-
-1. Interpretar os dados enviados (CSV/Excel)
-2. Analisar a pergunta do usuário
-3. Responder com:
-   • Estrutura profissional  
-   • Clareza  
-   • Dados relevantes  
-   • Tom consultivo  
-   • Orientação prática
-
-Dados (primeiras 20 linhas):
-{dados_str}
-
-Pergunta: {message}
-
-Escreva uma resposta robusta, objetiva e profissional, como em um relatório executivo curto.
-"""
-
-        response = model.generate_content(prompt)
-        resposta = response.text
-
-        return jsonify({"response": resposta})
+        return jsonify({
+            "response": resposta,
+            "graphs": [g.replace("static/", "") for g in graficos]
+        })
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": f"Erro interno: {str(e)}"})
 
-# ------------------------------
-# Execução local
-# ------------------------------
-if __name__ == '__main__':
+# ----------------------------------
+# EXECUÇÃO LOCAL
+# ----------------------------------
+if __name__ == "__main__":
     app.run(debug=True)
