@@ -1,28 +1,67 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Alpha Level Master</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Alpha Insights - IA de Vendas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <div class="container">
-        <h1>Alpha Level Master</h1>
 
-        <form action="/analisar" method="POST" enctype="multipart/form-data">
-            <label for="prompt">Digite seu prompt:</label>
-            <textarea name="prompt" id="prompt" required></textarea>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="logo">Alpha Insights</h2>
+        <p class="side-info">Análises inteligentes com IA + gráficos automáticos.</p>
+    </aside>
 
-            <label for="arquivo">Envie seu arquivo CSV (opcional):</label>
-            <input type="file" name="arquivo" accept=".csv">
+    <!-- MAIN CONTENT -->
+    <main class="main">
 
-            <button type="submit">Analisar</button>
-        </form>
+        <div class="chat-container">
 
-        <div class="resultado">
-            {{ resultado | safe }}
+            <h1 class="title">Análise Inteligente de Vendas</h1>
+
+            <!-- FORM -->
+            <form class="form" action="/process" method="POST" enctype="multipart/form-data">
+
+                <label class="label">Escolha sua planilha (.csv ou .xlsx)</label>
+                <input class="input-file" type="file" name="file" accept=".csv,.xlsx,.xls" required>
+
+                <label class="label">Pergunte ao Assistente</label>
+                <input class="input-text" type="text" name="question" placeholder="Ex: Quais produtos mais venderam?" required>
+
+                <button class="btn" type="submit">Analisar</button>
+            </form>
+
+            <!-- ERRO -->
+            {% if error %}
+                <div class="card error">{{ error }}</div>
+            {% endif %}
+
+            <!-- RESPOSTA IA -->
+            {% if answer %}
+                <div class="card">
+                    <h2 class="subtitle">💬 Resposta da IA:</h2>
+                    <p class="ai-text">{{ answer }}</p>
+                </div>
+            {% endif %}
+
+            <!-- GRÁFICOS -->
+            {% if graphs %}
+                <div class="card">
+                    <h2 class="subtitle">📈 Gráficos Gerados:</h2>
+
+                    <div class="graph-grid">
+                        {% for g in graphs %}
+                            <img class="graph-img" src="{{ url_for('static', filename=g.split('static/')[1]) }}">
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
         </div>
-    </div>
+
+    </main>
+
 </body>
 </html>
