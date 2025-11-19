@@ -2,43 +2,66 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Alpha Insights - Análise de Vendas</title>
+    <title>Alpha Insights - IA de Vendas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-    <div class="container">
-        <h1>📊 Alpha Insights</h1>
-        <p>Envie sua planilha de vendas e receba uma análise inteligente com gráficos automáticos.</p>
 
-        <form action="/process" method="POST" enctype="multipart/form-data">
-            <label>Escolha o arquivo CSV:</label>
-            <input type="file" name="file" accept=".csv" required>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="logo">Alpha Insights</h2>
+        <p class="side-info">Análises inteligentes com IA + gráficos automáticos.</p>
+    </aside>
 
-            <label>Pergunte ao assistente:</label>
-            <input type="text" name="question" placeholder="Ex: Quais produtos venderam mais este mês?" required>
+    <!-- MAIN CONTENT -->
+    <main class="main">
 
-            <button type="submit">Analisar</button>
-        </form>
+        <div class="chat-container">
 
-        {% if error %}
-            <div class="error">{{ error }}</div>
-        {% endif %}
+            <h1 class="title">Análise Inteligente de Vendas</h1>
 
-        {% if answer %}
-            <div class="answer">
-                <h2>🧠 Análise do Assistente:</h2>
-                <p>{{ answer }}</p>
-            </div>
-        {% endif %}
+            <!-- FORM -->
+            <form class="form" action="/process" method="POST" enctype="multipart/form-data">
 
-        {% if graphs %}
-            <div class="graphs">
-                <h2>📈 Gráficos Gerados:</h2>
-                {% for g in graphs %}
-                    <img src="{{ url_for('static', filename=g.split('static/')[1]) }}" alt="Gráfico de vendas">
-                {% endfor %}
-            </div>
-        {% endif %}
-    </div>
+                <label class="label">Escolha sua planilha (.csv ou .xlsx)</label>
+                <input class="input-file" type="file" name="file" accept=".csv,.xlsx,.xls" required>
+
+                <label class="label">Pergunte ao Assistente</label>
+                <input class="input-text" type="text" name="question" placeholder="Ex: Quais produtos mais venderam?" required>
+
+                <button class="btn" type="submit">Analisar</button>
+            </form>
+
+            <!-- ERRO -->
+            {% if error %}
+                <div class="card error">{{ error }}</div>
+            {% endif %}
+
+            <!-- RESPOSTA IA -->
+            {% if answer %}
+                <div class="card">
+                    <h2 class="subtitle">💬 Resposta da IA:</h2>
+                    <p class="ai-text">{{ answer }}</p>
+                </div>
+            {% endif %}
+
+            <!-- GRÁFICOS -->
+            {% if graphs %}
+                <div class="card">
+                    <h2 class="subtitle">📈 Gráficos Gerados:</h2>
+
+                    <div class="graph-grid">
+                        {% for g in graphs %}
+                            <img class="graph-img" src="{{ url_for('static', filename=g.split('static/')[1]) }}">
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
 </body>
 </html>
